@@ -1,0 +1,13 @@
+{
+  "id": "openrgb_bridge",
+  "version": "1.0.0",
+  "name": "meta.name",
+  "publisher": "Skydimo",
+  "type": "extension",
+  "language": "lua",
+  "entry": "init.lua",
+  "permissions": ["network:tcp", "process"],
+  "description": "meta.description",
+  "repository": "https://github.com/skydimo/skydimo-plugins",
+  "license": "MIT"
+}

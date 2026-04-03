@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "name": "OpenRGB Bridge",
+    "description": "Интегрирует устройства OpenRGB в Light через TCP."
+  }
+}

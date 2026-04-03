@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "name": "OpenRGB 橋接",
+    "description": "透過 TCP 將 OpenRGB 裝置橋接到 Light。"
+  }
+}

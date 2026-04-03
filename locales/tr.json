@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "name": "OpenRGB Köprüsü",
+    "description": "OpenRGB cihazlarını TCP üzerinden Light'a köprüler."
+  }
+}
