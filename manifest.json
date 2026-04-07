@@ -8,6 +8,6 @@
   "entry": "init.lua",
   "permissions": ["network:tcp", "process"],
   "description": "meta.description",
-  "repository": "https://github.com/skydimo/skydimo-plugins",
+  "repository": "https://github.com/Skydimo-Team/Extension.OpenRGB-Bridge.git",
   "license": "MIT"
 }
