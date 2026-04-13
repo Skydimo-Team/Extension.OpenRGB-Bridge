@@ -343,16 +343,21 @@ local function register_device(dev_idx, info)
             }
         end
 
-        outputs[#outputs + 1] = {
+        local output_entry = {
             id       = "zone" .. (i - 1),
             name     = zone.name,
             output_type = output_type,
-            leds_count  = zone.leds_count,
             matrix = matrix,
             editable = editable,
             min_total_leds = leds_min,
             max_total_leds = leds_max,
         }
+        -- For editable zones, only pass leds_count when > 0;
+        -- when 0, let core auto-assign half of max_total_leds.
+        if not editable or (zone.leds_count and zone.leds_count > 0) then
+            output_entry.leds_count = zone.leds_count
+        end
+        outputs[#outputs + 1] = output_entry
     end
 
     -- If no zones parsed, create a single default output
