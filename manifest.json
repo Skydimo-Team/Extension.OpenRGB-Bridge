@@ -7,6 +7,7 @@
   "language": "lua",
   "entry": "init.lua",
   "permissions": ["network:tcp", "process"],
+  "page": "page/dist/index.html",
   "description": "meta.description",
   "repository": "https://github.com/Skydimo-Team/Extension.OpenRGB-Bridge.git",
   "license": "MIT"

@@ -1,0 +1,114 @@
+:root {
+  color-scheme: light;
+  --bg-app: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.6);
+  --bg-card-hover: rgba(0, 0, 0, 0.03);
+  --bg-panel: rgba(255, 255, 255, 0.94);
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #5f5f5f;
+  --text-muted: #808080;
+
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-strong: rgba(0, 0, 0, 0.1);
+
+  --accent-color: #0067c0;
+  --accent-hover: #1975c5;
+  --accent-text: #ffffff;
+
+  --color-success: #107c10;
+  --color-error: #c42b1c;
+  --color-warning: #FF8D28;
+
+  --badge-ok-bg: rgba(16, 124, 16, 0.1);
+  --badge-ok-text: #107c10;
+  --badge-error-bg: rgba(196, 43, 28, 0.1);
+  --badge-error-text: #c42b1c;
+  --badge-warning-bg: rgba(255, 141, 40, 0.12);
+  --badge-warning-text: #9a4a00;
+  --badge-idle-bg: rgba(0, 0, 0, 0.05);
+  --badge-idle-text: #5f5f5f;
+  --badge-disabled-bg: rgba(0, 0, 0, 0.05);
+  --badge-disabled-text: #808080;
+  --badge-device-bg: rgba(0, 103, 192, 0.08);
+  --badge-device-text: #0067c0;
+
+  --toggle-bg: #c0c0cc;
+  --toggle-bg-on: var(--accent-color);
+  --toggle-knob: #ffffff;
+
+  --card-icon-bg: rgba(0, 0, 0, 0.05);
+
+  --font-sans: "Segoe UI Variable", "Segoe UI", Inter, sans-serif;
+
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg-app: #202020;
+    --bg-card: rgba(45, 45, 45, 0.5);
+    --bg-card-hover: rgba(255, 255, 255, 0.04);
+    --bg-panel: rgba(32, 32, 32, 0.92);
+
+    --text-primary: #ffffff;
+    --text-secondary: #d0d0d0;
+    --text-muted: #808080;
+
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-strong: rgba(255, 255, 255, 0.1);
+
+    --accent-color: #60cdff;
+    --accent-hover: #7ad6ff;
+    --accent-text: #000000;
+
+    --color-success: #6cc4a1;
+    --color-error: #FF4245;
+    --color-warning: #FF9230;
+
+    --badge-ok-bg: rgba(108, 196, 161, 0.12);
+    --badge-ok-text: #6cc4a1;
+    --badge-error-bg: rgba(255, 66, 69, 0.12);
+    --badge-error-text: #FF4245;
+    --badge-warning-bg: rgba(255, 146, 48, 0.14);
+    --badge-warning-text: #ffbe78;
+    --badge-idle-bg: rgba(255, 255, 255, 0.06);
+    --badge-idle-text: #c6c8d0;
+    --badge-disabled-bg: rgba(255, 255, 255, 0.06);
+    --badge-disabled-text: #808080;
+    --badge-device-bg: rgba(96, 205, 255, 0.1);
+    --badge-device-text: #60cdff;
+
+    --toggle-bg: #3a3f55;
+    --toggle-knob: #e0e0e0;
+
+    --card-icon-bg: rgba(255, 255, 255, 0.06);
+  }
+}
+
+html,
+body,
+#root {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  margin: 0;
+  height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+}

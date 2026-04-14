@@ -30,6 +30,40 @@ local openrgb_process = nil     -- Process handle for the bundled OpenRGB instan
 local sync_devices              -- Forward declaration (used by connect_and_sync)
 local disconnect                -- Forward declaration (used by connect_and_sync)
 
+local disabled_devices = {}     -- set of device identity strings (vendor|name|serial)
+local DISABLED_FILE = "disabled_devices.json"
+
+local function load_disabled_devices()
+    local path = ext.data_dir .. "/" .. DISABLED_FILE
+    local f = io.open(path, "r")
+    if not f then return end
+    local raw = f:read("*a")
+    f:close()
+    local ok, list = pcall(ext.json_decode, raw)
+    if ok and type(list) == "table" then
+        disabled_devices = {}
+        for _, port in ipairs(list) do
+            if type(port) == "string" then
+                disabled_devices[port] = true
+            end
+        end
+    end
+end
+
+local function save_disabled_devices()
+    local list = {}
+    for port in pairs(disabled_devices) do
+        list[#list + 1] = port
+    end
+    table.sort(list)
+    local path = ext.data_dir .. "/" .. DISABLED_FILE
+    local f = io.open(path, "w")
+    if f then
+        f:write(ext.json_encode(list))
+        f:close()
+    end
+end
+
 -------------------------------------------------------------------
 -- Helpers
 -------------------------------------------------------------------
@@ -270,6 +304,7 @@ local function connect_and_sync()
         return false
     end
 
+    pcall(send_connection_status)
     return true
 end
 
@@ -282,6 +317,14 @@ local function make_controller_port(dev_idx, info)
         identifier = "dev" .. dev_idx
     end
     return "openrgb://" .. OPENRGB_HOST .. ":" .. OPENRGB_PORT .. "/" .. identifier
+end
+
+--- Build a stable identity key for a device based on vendor + name + serial.
+local function make_device_identity(info)
+    local vendor = tostring(info.vendor or "")
+    local name   = tostring(info.name or "")
+    local serial = tostring(info.serial or "")
+    return vendor .. "|" .. name .. "|" .. serial
 end
 
 local function strip_protocol_prefix(location)
@@ -310,6 +353,19 @@ end
 local function register_device(dev_idx, info)
     local controller_port = make_controller_port(dev_idx, info)
     local device_path = make_device_path(dev_idx, info)
+
+    -- Skip registration if device is disabled (by identity: vendor|name|serial)
+    local identity = make_device_identity(info)
+    if disabled_devices[identity] then
+        devices[controller_port] = {
+            dev_idx = dev_idx,
+            info = info,
+            device_path = device_path,
+            disabled = true,
+        }
+        ext.log("Skipping disabled device: " .. (info.name or "unknown") .. " [" .. identity .. "]")
+        return
+    end
 
     -- Build outputs from zones
     local outputs = {}
@@ -560,6 +616,64 @@ local function unregister_all_devices()
 end
 
 -------------------------------------------------------------------
+-- Page communication
+-------------------------------------------------------------------
+
+local ZONE_TYPE_NAMES = { [0] = "single", [1] = "linear", [2] = "matrix" }
+
+local function send_connection_status()
+    pcall(ext.page_emit, {
+        type = "connection_status",
+        connected = conn ~= nil,
+    })
+end
+
+local function send_devices_snapshot()
+    local device_list = {}
+    for port, entry in pairs(devices) do
+        local info = entry.info or {}
+        local zones = {}
+        for _, z in ipairs(info.zones or {}) do
+            zones[#zones + 1] = {
+                name = z.name or "",
+                zone_type = ZONE_TYPE_NAMES[z.zone_type] or "unknown",
+                zone_type_id = z.zone_type,
+                leds_count = z.leds_count or 0,
+                leds_min = z.leds_min or 0,
+                leds_max = z.leds_max or 0,
+                matrix_width = z.matrix_width,
+                matrix_height = z.matrix_height,
+            }
+        end
+        local identity = make_device_identity(info)
+        device_list[#device_list + 1] = {
+            controller_port = port,
+            device_path = entry.device_path or "",
+            dev_idx = entry.dev_idx or -1,
+            name = info.name or "Unknown",
+            vendor = info.vendor or "",
+            description = info.description or "",
+            serial = info.serial or "",
+            location = info.location or "",
+            device_type = info.device_type or "unknown",
+            device_type_id = info.device_type_id or -1,
+            num_leds = info.num_leds or 0,
+            zones = zones,
+            disabled = disabled_devices[identity] == true,
+            registered = not (disabled_devices[identity] == true),
+        }
+    end
+
+    -- Sort by dev_idx for stable ordering
+    table.sort(device_list, function(a, b) return a.dev_idx < b.dev_idx end)
+
+    ext.page_emit({
+        type = "devices_snapshot",
+        devices = device_list,
+    })
+end
+
+-------------------------------------------------------------------
 -- Sync device list
 -------------------------------------------------------------------
 
@@ -675,6 +789,8 @@ sync_devices = function(allow_follow_up, prune_missing, silent)
         end
     end
 
+    pcall(send_devices_snapshot)
+
     return {
         count = count,
         synced = synced,
@@ -695,6 +811,7 @@ disconnect = function()
     unregister_all_devices()
     server_protocol = 0
     pending_device_list_update = false
+    pcall(send_connection_status)
 end
 
 -------------------------------------------------------------------
@@ -769,6 +886,7 @@ end
 local P = {}
 
 function P.on_start()
+    load_disabled_devices()
     ext.log("OpenRGB Bridge extension starting")
 
     -- Launch the bundled OpenRGB in server mode
@@ -897,6 +1015,53 @@ function P.on_device_frame(port, outputs)
     if not send_packet(pkt) then
         ext.warn("Failed to send LEDs for " .. port .. ", disconnecting")
         disconnect()
+    end
+end
+
+function P.on_page_message(msg)
+    if type(msg) ~= "table" then return end
+
+    local msg_type = msg.type
+
+    if msg_type == "bootstrap" then
+        send_devices_snapshot()
+        send_connection_status()
+
+    elseif msg_type == "toggle_device" then
+        local port = msg.controller_port
+        if type(port) ~= "string" then return end
+
+        local entry = devices[port]
+        if not entry or not entry.info then return end
+        local identity = make_device_identity(entry.info)
+
+        if disabled_devices[identity] then
+            -- Enable: remove from disabled list, re-register if we have info
+            disabled_devices[identity] = nil
+            save_disabled_devices()
+            entry.disabled = nil
+            register_device(entry.dev_idx, entry.info)
+        else
+            -- Disable: add to disabled list, unregister
+            disabled_devices[identity] = true
+            save_disabled_devices()
+            entry.disabled = true
+            pcall(ext.remove_extension_device, port)
+            -- Remove from registered_ports list
+            for idx, p in ipairs(registered_ports) do
+                if p == port then
+                    table.remove(registered_ports, idx)
+                    break
+                end
+            end
+        end
+        send_devices_snapshot()
+
+    elseif msg_type == "rescan" then
+        local ok, err = pcall(request_rescan_and_sync)
+        if not ok then
+            ext.warn("Page-requested rescan failed: " .. tostring(err))
+        end
     end
 end
 
