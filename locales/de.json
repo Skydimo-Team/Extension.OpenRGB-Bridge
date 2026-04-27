@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "name": "OpenRGB-Brücke",
+    "description": "Bindet OpenRGB-Geräte über TCP in Light ein."
+  }
+}

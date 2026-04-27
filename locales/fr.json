@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "name": "Passerelle OpenRGB",
+    "description": "Intègre les appareils OpenRGB dans Light via TCP."
+  }
+}

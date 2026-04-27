@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "name": "Puente OpenRGB",
+    "description": "Integra dispositivos OpenRGB en Light mediante TCP."
+  }
+}
