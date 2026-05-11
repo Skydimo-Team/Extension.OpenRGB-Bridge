@@ -32,6 +32,7 @@ local disconnect                -- Forward declaration (used by connect_and_sync
 
 local disabled_devices = {}     -- set of device identity strings (vendor|name|serial)
 local DISABLED_FILE = "disabled_devices.json"
+local RESOURCE_DIR = ext.resource_dir or ext.data_dir
 
 local function load_disabled_devices()
     local path = ext.data_dir .. "/" .. DISABLED_FILE
@@ -131,8 +132,8 @@ end
 -------------------------------------------------------------------
 
 local function launch_openrgb()
-    local exe_path = ext.data_dir .. "/OpenRGB/OpenRGB.exe"
-    local work_dir = ext.data_dir .. "/OpenRGB"
+    local exe_path = RESOURCE_DIR .. "/OpenRGB/OpenRGB.exe"
+    local work_dir = RESOURCE_DIR .. "/OpenRGB"
 
     ext.log("Launching OpenRGB: " .. exe_path)
     local ok, handle = pcall(ext.spawn_process, exe_path, {
