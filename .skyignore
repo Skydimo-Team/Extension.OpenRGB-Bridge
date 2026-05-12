@@ -1,20 +1,14 @@
-# Runtime only needs the built extension page.
+# Extension package: exclude npm page sources, keep runtime Lua/assets and built page output.
 .git
+.gitignore
+.skyignore
 .DS_Store
 Thumbs.db
 *.tmp
 *.log
 
-page/.gitignore
-page/index.html
-page/node_modules/
-page/src/
-page/public/
-page/package.json
-page/package-lock.json
-page/README.md
-page/eslint.config.js
-page/vite.config.ts
-page/tsconfig.json
-page/tsconfig.app.json
-page/tsconfig.node.json
+# Keep the built extension page only.
+page/*
+page/.*
+!page/dist/
+!page/dist/**
