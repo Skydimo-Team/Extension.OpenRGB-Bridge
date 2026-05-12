@@ -2,5 +2,29 @@
   "meta": {
     "name": "Puente OpenRGB",
     "description": "Integra dispositivos OpenRGB en Light mediante TCP."
+  },
+  "notifications": {
+    "title": "OpenRGB",
+    "waitingStartup": "Esperando a que OpenRGB se inicie...",
+    "waitingStartupElapsed": "Esperando a que OpenRGB se inicie... {elapsed}s",
+    "connecting": "Conectando a {host}:{port}...",
+    "serverUnavailable": "Servidor no disponible en {host}:{port}",
+    "protocolNegotiationFailed": "Error en la negociación del protocolo",
+    "deviceSyncFailed": "Error al sincronizar dispositivos: {error}",
+    "syncingDevices": "Sincronizando dispositivos...",
+    "syncSummary": "{count} dispositivo(s) encontrado(s), {synced} sincronizado(s)",
+    "syncSummaryRemoved": "{count} dispositivo(s) encontrado(s), {synced} sincronizado(s), {removed} eliminado(s)",
+    "syncSummaryFailures": "{count} dispositivo(s) encontrado(s), {synced} sincronizado(s), {failures} error(es)",
+    "syncSummaryRemovedFailures": "{count} dispositivo(s) encontrado(s), {synced} sincronizado(s), {removed} eliminado(s), {failures} error(es)",
+    "rescanningHardware": "Reescaneando hardware...",
+    "rescanRequestFailed": "No se pudo enviar la solicitud de reescaneo",
+    "rescanElapsed": "Reescaneando hardware... {elapsed}s ({found} encontrado(s))",
+    "rescanSyncFailed": "Error al sincronizar después del reescaneo",
+    "rescanStillInProgress": "El reescaneo sigue en curso; se conservaron los dispositivos existentes para evitar eliminaciones falsas",
+    "launchFailed": "No se pudo iniciar OpenRGB",
+    "serverStartFailed": "El servidor OpenRGB no pudo iniciarse",
+    "relaunchFailed": "No se pudo reiniciar OpenRGB",
+    "serverRestartFailed": "El servidor OpenRGB no pudo reiniciarse",
+    "rescanReconnect": "El reescaneo falló, reconectando..."
   }
 }

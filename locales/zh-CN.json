@@ -2,5 +2,29 @@
   "meta": {
     "name": "OpenRGB 桥接",
     "description": "通过 TCP 将 OpenRGB 设备桥接到 Light。"
+  },
+  "notifications": {
+    "title": "OpenRGB",
+    "waitingStartup": "正在等待 OpenRGB 启动...",
+    "waitingStartupElapsed": "正在等待 OpenRGB 启动... {elapsed}s",
+    "connecting": "正在连接 {host}:{port}...",
+    "serverUnavailable": "{host}:{port} 上的服务器不可用",
+    "protocolNegotiationFailed": "协议协商失败",
+    "deviceSyncFailed": "设备同步失败：{error}",
+    "syncingDevices": "正在同步设备...",
+    "syncSummary": "发现 {count} 个设备，已同步 {synced} 个",
+    "syncSummaryRemoved": "发现 {count} 个设备，已同步 {synced} 个，移除 {removed} 个",
+    "syncSummaryFailures": "发现 {count} 个设备，已同步 {synced} 个，失败 {failures} 个",
+    "syncSummaryRemovedFailures": "发现 {count} 个设备，已同步 {synced} 个，移除 {removed} 个，失败 {failures} 个",
+    "rescanningHardware": "正在重新扫描硬件...",
+    "rescanRequestFailed": "发送重新扫描请求失败",
+    "rescanElapsed": "正在重新扫描硬件... {elapsed}s（已发现 {found} 个）",
+    "rescanSyncFailed": "重新扫描同步失败",
+    "rescanStillInProgress": "重新扫描仍在进行，已保留现有设备以避免误移除",
+    "launchFailed": "启动 OpenRGB 失败",
+    "serverStartFailed": "OpenRGB 服务器启动失败",
+    "relaunchFailed": "重新启动 OpenRGB 失败",
+    "serverRestartFailed": "OpenRGB 服务器重启失败",
+    "rescanReconnect": "重新扫描失败，正在重新连接..."
   }
 }

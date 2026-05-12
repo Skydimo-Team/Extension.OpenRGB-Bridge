@@ -2,5 +2,29 @@
   "meta": {
     "name": "Passerelle OpenRGB",
     "description": "Intègre les appareils OpenRGB dans Light via TCP."
+  },
+  "notifications": {
+    "title": "OpenRGB",
+    "waitingStartup": "En attente du démarrage d'OpenRGB...",
+    "waitingStartupElapsed": "En attente du démarrage d'OpenRGB... {elapsed}s",
+    "connecting": "Connexion à {host}:{port}...",
+    "serverUnavailable": "Serveur indisponible sur {host}:{port}",
+    "protocolNegotiationFailed": "Échec de la négociation du protocole",
+    "deviceSyncFailed": "Échec de la synchronisation des appareils : {error}",
+    "syncingDevices": "Synchronisation des appareils...",
+    "syncSummary": "{count} appareil(s) trouvé(s), {synced} synchronisé(s)",
+    "syncSummaryRemoved": "{count} appareil(s) trouvé(s), {synced} synchronisé(s), {removed} supprimé(s)",
+    "syncSummaryFailures": "{count} appareil(s) trouvé(s), {synced} synchronisé(s), {failures} échec(s)",
+    "syncSummaryRemovedFailures": "{count} appareil(s) trouvé(s), {synced} synchronisé(s), {removed} supprimé(s), {failures} échec(s)",
+    "rescanningHardware": "Nouvelle analyse du matériel...",
+    "rescanRequestFailed": "Échec de l'envoi de la demande de nouvelle analyse",
+    "rescanElapsed": "Nouvelle analyse du matériel... {elapsed}s ({found} trouvé(s))",
+    "rescanSyncFailed": "Échec de la synchronisation après nouvelle analyse",
+    "rescanStillInProgress": "La nouvelle analyse est toujours en cours, les appareils existants ont été conservés pour éviter une suppression erronée",
+    "launchFailed": "Échec du lancement d'OpenRGB",
+    "serverStartFailed": "Échec du démarrage du serveur OpenRGB",
+    "relaunchFailed": "Échec du relancement d'OpenRGB",
+    "serverRestartFailed": "Échec du redémarrage du serveur OpenRGB",
+    "rescanReconnect": "Nouvelle analyse échouée, reconnexion..."
   }
 }

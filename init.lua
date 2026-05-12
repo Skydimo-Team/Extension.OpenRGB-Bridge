@@ -19,6 +19,23 @@ local RECV_TIMEOUT_MS = 5000
 local RESCAN_TIMEOUT_MS = 30000
 local CLIENT_NAME = "Skydimo"
 local PROTOCOL_VERSION = 5
+local NOTIFICATION_TITLE = "notifications.title"
+
+local function i18n(key, args)
+    local value = { key = key }
+    if args then
+        value.args = args
+    end
+    return value
+end
+
+local function notify_i18n(description_key, level, args)
+    ext.notify(NOTIFICATION_TITLE, i18n(description_key, args), level)
+end
+
+local function notify_persistent_i18n(id, description_key, args)
+    ext.notify_persistent(id, NOTIFICATION_TITLE, i18n(description_key, args))
+end
 
 -- State
 local conn = nil                -- TCP connection handle
@@ -174,7 +191,7 @@ local function wait_for_openrgb_server(max_attempts, delay_ms)
     max_attempts = max_attempts or 30
     delay_ms = delay_ms or 1000
 
-    ext.notify_persistent("openrgb-startup", "OpenRGB", "Waiting for OpenRGB to start...")
+    notify_persistent_i18n("openrgb-startup", "notifications.waitingStartup")
 
     for attempt = 1, max_attempts do
         -- Check if the process is still alive
@@ -201,8 +218,9 @@ local function wait_for_openrgb_server(max_attempts, delay_ms)
 
         -- Update notification with elapsed time
         local elapsed_s = attempt
-        ext.notify_persistent("openrgb-startup", "OpenRGB",
-            "Waiting for OpenRGB to start... " .. elapsed_s .. "s")
+        notify_persistent_i18n("openrgb-startup", "notifications.waitingStartupElapsed", {
+            elapsed = elapsed_s,
+        })
 
         ext.sleep(delay_ms)
     end
@@ -267,7 +285,10 @@ end
 
 --- Establish TCP connection, negotiate protocol, and sync devices.
 local function connect_and_sync()
-    ext.notify_persistent("openrgb-connect", "OpenRGB", "Connecting to " .. OPENRGB_HOST .. ":" .. OPENRGB_PORT .. "...")
+    notify_persistent_i18n("openrgb-connect", "notifications.connecting", {
+        host = OPENRGB_HOST,
+        port = OPENRGB_PORT,
+    })
 
     local ok, result = pcall(tcp.connect, {
         host = OPENRGB_HOST,
@@ -280,7 +301,10 @@ local function connect_and_sync()
     ext.dismiss_persistent("openrgb-connect")
 
     if not ok then
-        ext.notify("OpenRGB", "Server not available at " .. OPENRGB_HOST .. ":" .. OPENRGB_PORT, "warning")
+        notify_i18n("notifications.serverUnavailable", "warning", {
+            host = OPENRGB_HOST,
+            port = OPENRGB_PORT,
+        })
         return false
     end
 
@@ -289,7 +313,7 @@ local function connect_and_sync()
 
     -- Negotiate protocol
     if not negotiate_protocol() then
-        ext.notify("OpenRGB", "Protocol negotiation failed", "error")
+        notify_i18n("notifications.protocolNegotiationFailed", "error")
         disconnect()
         return false
     end
@@ -300,7 +324,9 @@ local function connect_and_sync()
     -- Sync devices
     local sync_ok, sync_err = pcall(sync_devices)
     if not sync_ok then
-        ext.notify("OpenRGB", "Device sync failed: " .. tostring(sync_err), "error")
+        notify_i18n("notifications.deviceSyncFailed", "error", {
+            error = tostring(sync_err),
+        })
         disconnect()
         return false
     end
@@ -683,7 +709,7 @@ sync_devices = function(allow_follow_up, prune_missing, silent)
         prune_missing = true
     end
     if silent ~= true then
-        ext.notify_persistent("openrgb-sync", "OpenRGB", "Syncing devices...")
+        notify_persistent_i18n("openrgb-sync", "notifications.syncingDevices")
     end
     pending_device_list_update = false
 
@@ -768,15 +794,21 @@ sync_devices = function(allow_follow_up, prune_missing, silent)
         ext.dismiss_persistent("openrgb-sync")
     end
     local level = synced > 0 and "success" or "warning"
-    local summary = "Found " .. count .. " device(s), synced " .. synced
-    if removed > 0 then
-        summary = summary .. ", removed " .. removed
-    end
-    if failures > 0 then
-        summary = summary .. ", failed " .. failures
+    local summary_key = "notifications.syncSummary"
+    if removed > 0 and failures > 0 then
+        summary_key = "notifications.syncSummaryRemovedFailures"
+    elseif removed > 0 then
+        summary_key = "notifications.syncSummaryRemoved"
+    elseif failures > 0 then
+        summary_key = "notifications.syncSummaryFailures"
     end
     if silent ~= true then
-        ext.notify("OpenRGB", summary, level)
+        notify_i18n(summary_key, level, {
+            count = count,
+            synced = synced,
+            removed = removed,
+            failures = failures,
+        })
     end
 
     -- If we received DEVICE_LIST_UPDATED during sync, perform one additional
@@ -821,14 +853,14 @@ end
 
 --- Ask OpenRGB to rescan hardware, then poll-sync until device list stabilizes.
 local function request_rescan_and_sync()
-    ext.notify_persistent("openrgb-rescan", "OpenRGB", "Rescanning hardware...")
+    notify_persistent_i18n("openrgb-rescan", "notifications.rescanningHardware")
 
     -- Send the rescan request. This has no direct reply; instead OpenRGB
     -- will asynchronously send DEVICE_LIST_UPDATED when the scan finishes.
     local pkt = proto.build_request_rescan_devices()
     if not send_packet(pkt) then
         ext.dismiss_persistent("openrgb-rescan")
-        ext.notify("OpenRGB", "Failed to send rescan request", "error")
+        notify_i18n("notifications.rescanRequestFailed", "error")
         return false
     end
 
@@ -856,8 +888,10 @@ local function request_rescan_and_sync()
         ext.sleep(poll_ms)
         elapsed_ms = elapsed_ms + poll_ms
         local secs = math.floor(elapsed_ms / 1000)
-        ext.notify_persistent("openrgb-rescan", "OpenRGB",
-            "Rescanning hardware... " .. secs .. "s (found " .. tostring(math.max(0, latest_count)) .. ")")
+        notify_persistent_i18n("openrgb-rescan", "notifications.rescanElapsed", {
+            elapsed = secs,
+            found = tostring(math.max(0, latest_count)),
+        })
     end
 
     local allow_prune = (latest_count > 0) or (not had_existing_devices)
@@ -869,12 +903,12 @@ local function request_rescan_and_sync()
     ext.dismiss_persistent("openrgb-rescan")
     if not ok then
         ext.warn("Post-rescan sync failed: " .. tostring(err))
-        ext.notify("OpenRGB", "Rescan sync failed", "error")
+        notify_i18n("notifications.rescanSyncFailed", "error")
         return false
     end
 
     if not allow_prune then
-        ext.notify("OpenRGB", "Rescan still in progress, kept existing devices to avoid false removal", "warning")
+        notify_i18n("notifications.rescanStillInProgress", "warning")
     end
 
     return true
@@ -892,13 +926,13 @@ function P.on_start()
 
     -- Launch the bundled OpenRGB in server mode
     if not launch_openrgb() then
-        ext.notify("OpenRGB", "Failed to launch OpenRGB", "error")
+        notify_i18n("notifications.launchFailed", "error")
         return
     end
 
     -- Wait for the server to become available
     if not wait_for_openrgb_server(30, 1000) then
-        ext.notify("OpenRGB", "OpenRGB server failed to start", "error")
+        notify_i18n("notifications.serverStartFailed", "error")
         kill_openrgb()
         return
     end
@@ -923,11 +957,11 @@ function P.on_scan_devices()
         openrgb_process = nil
 
         if not launch_openrgb() then
-            ext.notify("OpenRGB", "Failed to relaunch OpenRGB", "error")
+            notify_i18n("notifications.relaunchFailed", "error")
             return
         end
         if not wait_for_openrgb_server(30, 1000) then
-            ext.notify("OpenRGB", "OpenRGB server failed to restart", "error")
+            notify_i18n("notifications.serverRestartFailed", "error")
             kill_openrgb()
             return
         end
@@ -938,7 +972,7 @@ function P.on_scan_devices()
         local ok, err = pcall(request_rescan_and_sync)
         if not ok then
             ext.warn("Rescan failed: " .. tostring(err))
-            ext.notify("OpenRGB", "Rescan failed, reconnecting...", "warning")
+            notify_i18n("notifications.rescanReconnect", "warning")
             disconnect()
             -- Fall through to reconnect below
         else

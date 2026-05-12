@@ -2,5 +2,29 @@
   "meta": {
     "name": "OpenRGB Bridge",
     "description": "Bridges OpenRGB devices into Light over TCP."
+  },
+  "notifications": {
+    "title": "OpenRGB",
+    "waitingStartup": "Waiting for OpenRGB to start...",
+    "waitingStartupElapsed": "Waiting for OpenRGB to start... {elapsed}s",
+    "connecting": "Connecting to {host}:{port}...",
+    "serverUnavailable": "Server not available at {host}:{port}",
+    "protocolNegotiationFailed": "Protocol negotiation failed",
+    "deviceSyncFailed": "Device sync failed: {error}",
+    "syncingDevices": "Syncing devices...",
+    "syncSummary": "Found {count} device(s), synced {synced}",
+    "syncSummaryRemoved": "Found {count} device(s), synced {synced}, removed {removed}",
+    "syncSummaryFailures": "Found {count} device(s), synced {synced}, failed {failures}",
+    "syncSummaryRemovedFailures": "Found {count} device(s), synced {synced}, removed {removed}, failed {failures}",
+    "rescanningHardware": "Rescanning hardware...",
+    "rescanRequestFailed": "Failed to send rescan request",
+    "rescanElapsed": "Rescanning hardware... {elapsed}s (found {found})",
+    "rescanSyncFailed": "Rescan sync failed",
+    "rescanStillInProgress": "Rescan still in progress, kept existing devices to avoid false removal",
+    "launchFailed": "Failed to launch OpenRGB",
+    "serverStartFailed": "OpenRGB server failed to start",
+    "relaunchFailed": "Failed to relaunch OpenRGB",
+    "serverRestartFailed": "OpenRGB server failed to restart",
+    "rescanReconnect": "Rescan failed, reconnecting..."
   }
 }

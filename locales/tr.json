@@ -2,5 +2,29 @@
   "meta": {
     "name": "OpenRGB Köprüsü",
     "description": "OpenRGB cihazlarını TCP üzerinden Light'a köprüler."
+  },
+  "notifications": {
+    "title": "OpenRGB",
+    "waitingStartup": "OpenRGB'nin başlaması bekleniyor...",
+    "waitingStartupElapsed": "OpenRGB'nin başlaması bekleniyor... {elapsed}s",
+    "connecting": "{host}:{port} adresine bağlanılıyor...",
+    "serverUnavailable": "{host}:{port} adresindeki sunucu kullanılamıyor",
+    "protocolNegotiationFailed": "Protokol anlaşması başarısız oldu",
+    "deviceSyncFailed": "Cihaz eşitleme başarısız oldu: {error}",
+    "syncingDevices": "Cihazlar eşitleniyor...",
+    "syncSummary": "{count} cihaz bulundu, {synced} eşitlendi",
+    "syncSummaryRemoved": "{count} cihaz bulundu, {synced} eşitlendi, {removed} kaldırıldı",
+    "syncSummaryFailures": "{count} cihaz bulundu, {synced} eşitlendi, {failures} başarısız",
+    "syncSummaryRemovedFailures": "{count} cihaz bulundu, {synced} eşitlendi, {removed} kaldırıldı, {failures} başarısız",
+    "rescanningHardware": "Donanım yeniden taranıyor...",
+    "rescanRequestFailed": "Yeniden tarama isteği gönderilemedi",
+    "rescanElapsed": "Donanım yeniden taranıyor... {elapsed}s ({found} bulundu)",
+    "rescanSyncFailed": "Yeniden tarama eşitlemesi başarısız oldu",
+    "rescanStillInProgress": "Yeniden tarama hala sürüyor, hatalı kaldırmayı önlemek için mevcut cihazlar korundu",
+    "launchFailed": "OpenRGB başlatılamadı",
+    "serverStartFailed": "OpenRGB sunucusu başlatılamadı",
+    "relaunchFailed": "OpenRGB yeniden başlatılamadı",
+    "serverRestartFailed": "OpenRGB sunucusu yeniden başlatılamadı",
+    "rescanReconnect": "Yeniden tarama başarısız oldu, yeniden bağlanılıyor..."
   }
 }

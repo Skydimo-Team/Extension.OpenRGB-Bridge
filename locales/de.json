@@ -2,5 +2,29 @@
   "meta": {
     "name": "OpenRGB-Brücke",
     "description": "Bindet OpenRGB-Geräte über TCP in Light ein."
+  },
+  "notifications": {
+    "title": "OpenRGB",
+    "waitingStartup": "Warte auf den Start von OpenRGB...",
+    "waitingStartupElapsed": "Warte auf den Start von OpenRGB... {elapsed}s",
+    "connecting": "Verbinde mit {host}:{port}...",
+    "serverUnavailable": "Server unter {host}:{port} ist nicht verfügbar",
+    "protocolNegotiationFailed": "Protokollaushandlung fehlgeschlagen",
+    "deviceSyncFailed": "Gerätesynchronisierung fehlgeschlagen: {error}",
+    "syncingDevices": "Synchronisiere Geräte...",
+    "syncSummary": "{count} Gerät(e) gefunden, {synced} synchronisiert",
+    "syncSummaryRemoved": "{count} Gerät(e) gefunden, {synced} synchronisiert, {removed} entfernt",
+    "syncSummaryFailures": "{count} Gerät(e) gefunden, {synced} synchronisiert, {failures} fehlgeschlagen",
+    "syncSummaryRemovedFailures": "{count} Gerät(e) gefunden, {synced} synchronisiert, {removed} entfernt, {failures} fehlgeschlagen",
+    "rescanningHardware": "Hardware wird neu gescannt...",
+    "rescanRequestFailed": "Rescan-Anfrage konnte nicht gesendet werden",
+    "rescanElapsed": "Hardware wird neu gescannt... {elapsed}s ({found} gefunden)",
+    "rescanSyncFailed": "Rescan-Synchronisierung fehlgeschlagen",
+    "rescanStillInProgress": "Rescan läuft noch, vorhandene Geräte wurden beibehalten, um falsches Entfernen zu vermeiden",
+    "launchFailed": "OpenRGB konnte nicht gestartet werden",
+    "serverStartFailed": "OpenRGB-Server konnte nicht gestartet werden",
+    "relaunchFailed": "OpenRGB konnte nicht erneut gestartet werden",
+    "serverRestartFailed": "OpenRGB-Server konnte nicht neu gestartet werden",
+    "rescanReconnect": "Rescan fehlgeschlagen, verbinde erneut..."
   }
 }

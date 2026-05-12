@@ -2,5 +2,29 @@
   "meta": {
     "name": "OpenRGB Bridge",
     "description": "Интегрирует устройства OpenRGB в Light через TCP."
+  },
+  "notifications": {
+    "title": "OpenRGB",
+    "waitingStartup": "Ожидание запуска OpenRGB...",
+    "waitingStartupElapsed": "Ожидание запуска OpenRGB... {elapsed}с",
+    "connecting": "Подключение к {host}:{port}...",
+    "serverUnavailable": "Сервер недоступен по адресу {host}:{port}",
+    "protocolNegotiationFailed": "Не удалось согласовать протокол",
+    "deviceSyncFailed": "Не удалось синхронизировать устройства: {error}",
+    "syncingDevices": "Синхронизация устройств...",
+    "syncSummary": "Найдено устройств: {count}, синхронизировано: {synced}",
+    "syncSummaryRemoved": "Найдено устройств: {count}, синхронизировано: {synced}, удалено: {removed}",
+    "syncSummaryFailures": "Найдено устройств: {count}, синхронизировано: {synced}, ошибок: {failures}",
+    "syncSummaryRemovedFailures": "Найдено устройств: {count}, синхронизировано: {synced}, удалено: {removed}, ошибок: {failures}",
+    "rescanningHardware": "Повторное сканирование оборудования...",
+    "rescanRequestFailed": "Не удалось отправить запрос повторного сканирования",
+    "rescanElapsed": "Повторное сканирование оборудования... {elapsed}с (найдено: {found})",
+    "rescanSyncFailed": "Не удалось синхронизировать после повторного сканирования",
+    "rescanStillInProgress": "Повторное сканирование еще выполняется, существующие устройства сохранены, чтобы избежать ошибочного удаления",
+    "launchFailed": "Не удалось запустить OpenRGB",
+    "serverStartFailed": "Не удалось запустить сервер OpenRGB",
+    "relaunchFailed": "Не удалось перезапустить OpenRGB",
+    "serverRestartFailed": "Не удалось перезапустить сервер OpenRGB",
+    "rescanReconnect": "Повторное сканирование не удалось, переподключение..."
   }
 }
