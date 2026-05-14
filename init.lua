@@ -990,46 +990,45 @@ sync_devices = function(allow_follow_up, prune_missing, silent)
         )
     end
 
-    if silent ~= true then
-        ext.dismiss_persistent("openrgb-sync")
-    end
-    local level = synced > 0 and "success" or "warning"
-    local summary_key = "notifications.syncSummary"
-    if removed > 0 and failures > 0 then
-        summary_key = "notifications.syncSummaryRemovedFailures"
-    elseif removed > 0 then
-        summary_key = "notifications.syncSummaryRemoved"
-    elseif failures > 0 then
-        summary_key = "notifications.syncSummaryFailures"
-    end
-    if silent ~= true then
-        notify_i18n(summary_key, level, {
-            count = count,
-            synced = synced,
-            removed = removed,
-            failures = failures,
-        })
-    end
+    local result = {
+        count = count,
+        synced = synced,
+        removed = removed,
+        failures = failures,
+    }
 
     -- If we received DEVICE_LIST_UPDATED during sync, perform one additional
     -- sync pass to converge on the latest server state.
     if allow_follow_up ~= false and pending_device_list_update then
         pending_device_list_update = false
         ext.log("Re-sync requested by OpenRGB device-list update")
-        local ok, err = pcall(sync_devices, false, prune_missing, silent)
+        local ok, follow_up_result = pcall(sync_devices, false, prune_missing, true)
         if not ok then
-            ext.warn("OpenRGB follow-up sync failed: " .. tostring(err))
+            ext.warn("OpenRGB follow-up sync failed: " .. tostring(follow_up_result))
+        elseif type(follow_up_result) == "table" then
+            result = follow_up_result
         end
+    end
+
+    if silent ~= true then
+        ext.dismiss_persistent("openrgb-sync")
+    end
+    local level = result.synced > 0 and "success" or "warning"
+    local summary_key = "notifications.syncSummary"
+    if result.removed > 0 and result.failures > 0 then
+        summary_key = "notifications.syncSummaryRemovedFailures"
+    elseif result.removed > 0 then
+        summary_key = "notifications.syncSummaryRemoved"
+    elseif result.failures > 0 then
+        summary_key = "notifications.syncSummaryFailures"
+    end
+    if silent ~= true then
+        notify_i18n(summary_key, level, result)
     end
 
     pcall(send_devices_snapshot)
 
-    return {
-        count = count,
-        synced = synced,
-        removed = removed,
-        failures = failures,
-    }
+    return result
 end
 
 -------------------------------------------------------------------
