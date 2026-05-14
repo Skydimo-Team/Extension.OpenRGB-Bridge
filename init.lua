@@ -48,8 +48,14 @@ local sync_devices              -- Forward declaration (used by connect_and_sync
 local disconnect                -- Forward declaration (used by connect_and_sync)
 
 local disabled_devices = {}     -- set of device identity strings (vendor|name|serial)
+local conflict_rules = {}       -- "vid:pid" -> { processes = { ... }, troubleshooting_url = string? }
 local DISABLED_FILE = "disabled_devices.json"
+local CONFLICTING_EXE_FILE = "conflicting_exe.csv"
 local RESOURCE_DIR = ext.resource_dir or ext.data_dir
+
+local function trim(value)
+    return tostring(value or ""):match("^%s*(.-)%s*$")
+end
 
 local function load_disabled_devices()
     local path = ext.data_dir .. "/" .. DISABLED_FILE
@@ -65,6 +71,175 @@ local function load_disabled_devices()
                 disabled_devices[port] = true
             end
         end
+    end
+end
+
+local function parse_csv_line(line)
+    local fields = {}
+    local i = 1
+    local len = #line
+
+    while i <= len do
+        local field = ""
+        if line:sub(i, i) == '"' then
+            i = i + 1
+            while i <= len do
+                local ch = line:sub(i, i)
+                if ch == '"' then
+                    if line:sub(i + 1, i + 1) == '"' then
+                        field = field .. '"'
+                        i = i + 2
+                    else
+                        i = i + 1
+                        break
+                    end
+                else
+                    field = field .. ch
+                    i = i + 1
+                end
+            end
+            if line:sub(i, i) == "," then
+                i = i + 1
+            end
+        else
+            local comma = line:find(",", i, true)
+            if comma then
+                field = line:sub(i, comma - 1)
+                i = comma + 1
+            else
+                field = line:sub(i)
+                i = len + 1
+            end
+        end
+        fields[#fields + 1] = trim(field)
+    end
+
+    return fields
+end
+
+local function normalize_hex_id(value)
+    local normalized = trim(value):lower():gsub("^0x", "")
+    if normalized:match("^[0-9a-f][0-9a-f][0-9a-f][0-9a-f]$") then
+        return normalized
+    end
+    return nil
+end
+
+local function split_process_list(value)
+    local processes = {}
+    for part in trim(value):gmatch("[^|;]+") do
+        local process = trim(part)
+        if process ~= "" then
+            processes[#processes + 1] = process
+        end
+    end
+    return processes
+end
+
+local function normalize_header(value)
+    return trim(value):lower():gsub("[^%w]+", "_")
+end
+
+local function build_conflict_header_map(fields)
+    local map = {}
+    for index, field in ipairs(fields) do
+        local name = normalize_header(field)
+        if name == "vid" or name == "vendor_id" then
+            map.vid = index
+        elseif name == "pid" or name == "product_id" then
+            map.pid = index
+        elseif name == "exe" or name == "executable" or name == "process" or name == "processes"
+            or name == "conflicting_exe"
+            or name == "conflicting_processes"
+        then
+            map.exe = index
+        elseif name == "url" or name == "troubleshooting_url" or name == "troubleshooting" then
+            map.troubleshooting_url = index
+        end
+    end
+    if map.vid and map.pid and map.exe then
+        return map
+    end
+    return nil
+end
+
+local function add_conflict_rule(vid, pid, processes, troubleshooting_url)
+    if not vid or not pid or #processes == 0 then
+        return
+    end
+
+    local key = vid .. ":" .. pid
+    local rule = conflict_rules[key]
+    if not rule then
+        rule = { processes = {}, troubleshooting_url = nil }
+        conflict_rules[key] = rule
+    end
+
+    local seen = {}
+    for _, process in ipairs(rule.processes) do
+        seen[process:lower()] = true
+    end
+    for _, process in ipairs(processes) do
+        local normalized = trim(process)
+        local lookup = normalized:lower()
+        if normalized ~= "" and not seen[lookup] then
+            rule.processes[#rule.processes + 1] = normalized
+            seen[lookup] = true
+        end
+    end
+
+    local url = trim(troubleshooting_url)
+    if url ~= "" then
+        rule.troubleshooting_url = url
+    end
+end
+
+local function load_conflict_rules()
+    conflict_rules = {}
+
+    local path = RESOURCE_DIR .. "/" .. CONFLICTING_EXE_FILE
+    local f = io.open(path, "r")
+    if not f then
+        return
+    end
+
+    local header_map = nil
+    local first_data_row = true
+    for line in f:lines() do
+        if not line:match("^%s*$") and not line:match("^%s*#") then
+            local fields = parse_csv_line(line)
+            local skip_row = false
+            if first_data_row then
+                first_data_row = false
+                header_map = build_conflict_header_map(fields)
+                if header_map then
+                    skip_row = true
+                end
+            end
+
+            if not skip_row then
+                local map = header_map or {
+                    vid = 1,
+                    pid = 2,
+                    exe = 3,
+                    troubleshooting_url = 4,
+                }
+                local vid = normalize_hex_id(fields[map.vid])
+                local pid = normalize_hex_id(fields[map.pid])
+                local processes = split_process_list(fields[map.exe])
+                local troubleshooting_url = map.troubleshooting_url and fields[map.troubleshooting_url] or nil
+                add_conflict_rule(vid, pid, processes, troubleshooting_url)
+            end
+        end
+    end
+    f:close()
+
+    local count = 0
+    for _ in pairs(conflict_rules) do
+        count = count + 1
+    end
+    if count > 0 then
+        ext.log("Loaded OpenRGB conflict rules: " .. tostring(count))
     end
 end
 
@@ -377,9 +552,32 @@ local function make_device_path(dev_idx, info)
     return "openrgb-device://" .. OPENRGB_HOST .. ":" .. OPENRGB_PORT .. "/dev/" .. tostring(dev_idx)
 end
 
+local function extract_hid_vid_pid(device_path)
+    local path = tostring(device_path or ""):lower()
+    if not path:find("hid", 1, true) then
+        return nil, nil
+    end
+
+    local vid = path:match("vid_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
+        or path:match("ven_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
+    local pid = path:match("pid_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
+        or path:match("dev_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
+
+    return vid, pid
+end
+
+local function conflict_rule_for_device_path(device_path)
+    local vid, pid = extract_hid_vid_pid(device_path)
+    if not vid or not pid then
+        return nil
+    end
+    return conflict_rules[vid .. ":" .. pid]
+end
+
 local function register_device(dev_idx, info)
     local controller_port = make_controller_port(dev_idx, info)
     local device_path = make_device_path(dev_idx, info)
+    local conflict_rule = conflict_rule_for_device_path(device_path)
 
     -- Skip registration if device is disabled (by identity: vendor|name|serial)
     local identity = make_device_identity(info)
@@ -465,6 +663,8 @@ local function register_device(dev_idx, info)
         serial_id   = info.serial or "",
         description = info.description or "",
         device_type = info.device_type or "light",
+        conflicting_processes = conflict_rule and conflict_rule.processes or nil,
+        troubleshooting_url = conflict_rule and conflict_rule.troubleshooting_url or nil,
         outputs     = outputs,
     }
 
@@ -922,6 +1122,7 @@ local P = {}
 
 function P.on_start()
     load_disabled_devices()
+    load_conflict_rules()
     ext.log("OpenRGB Bridge extension starting")
 
     -- Launch the bundled OpenRGB in server mode
