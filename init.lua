@@ -48,7 +48,7 @@ local sync_devices              -- Forward declaration (used by connect_and_sync
 local disconnect                -- Forward declaration (used by connect_and_sync)
 
 local disabled_devices = {}     -- set of device identity strings (vendor|name|serial)
-local conflict_rules = {}       -- "vid:pid" -> { processes = { ... }, troubleshooting_url = string? }
+local conflict_rules = {}       -- "vid" -> { processes = { ... }, troubleshooting_url = string? }
 local DISABLED_FILE = "disabled_devices.json"
 local CONFLICTING_EXE_FILE = "conflicting_exe.csv"
 local RESOURCE_DIR = ext.resource_dir or ext.data_dir
@@ -146,8 +146,6 @@ local function build_conflict_header_map(fields)
         local name = normalize_header(field)
         if name == "vid" or name == "vendor_id" then
             map.vid = index
-        elseif name == "pid" or name == "product_id" then
-            map.pid = index
         elseif name == "exe" or name == "executable" or name == "process" or name == "processes"
             or name == "conflicting_exe"
             or name == "conflicting_processes"
@@ -157,22 +155,21 @@ local function build_conflict_header_map(fields)
             map.troubleshooting_url = index
         end
     end
-    if map.vid and map.pid and map.exe then
+    if map.vid and map.exe then
         return map
     end
     return nil
 end
 
-local function add_conflict_rule(vid, pid, processes, troubleshooting_url)
-    if not vid or not pid or #processes == 0 then
+local function add_conflict_rule(vid, processes, troubleshooting_url)
+    if not vid or #processes == 0 then
         return
     end
 
-    local key = vid .. ":" .. pid
-    local rule = conflict_rules[key]
+    local rule = conflict_rules[vid]
     if not rule then
         rule = { processes = {}, troubleshooting_url = nil }
-        conflict_rules[key] = rule
+        conflict_rules[vid] = rule
     end
 
     local seen = {}
@@ -218,17 +215,26 @@ local function load_conflict_rules()
             end
 
             if not skip_row then
-                local map = header_map or {
-                    vid = 1,
-                    pid = 2,
-                    exe = 3,
-                    troubleshooting_url = 4,
-                }
+                local map = header_map
+                if not map then
+                    if normalize_hex_id(fields[2]) and fields[3] ~= nil then
+                        map = {
+                            vid = 1,
+                            exe = 3,
+                            troubleshooting_url = 4,
+                        }
+                    else
+                        map = {
+                            vid = 1,
+                            exe = 2,
+                            troubleshooting_url = 3,
+                        }
+                    end
+                end
                 local vid = normalize_hex_id(fields[map.vid])
-                local pid = normalize_hex_id(fields[map.pid])
                 local processes = split_process_list(fields[map.exe])
                 local troubleshooting_url = map.troubleshooting_url and fields[map.troubleshooting_url] or nil
-                add_conflict_rule(vid, pid, processes, troubleshooting_url)
+                add_conflict_rule(vid, processes, troubleshooting_url)
             end
         end
     end
@@ -552,26 +558,18 @@ local function make_device_path(dev_idx, info)
     return "openrgb-device://" .. OPENRGB_HOST .. ":" .. OPENRGB_PORT .. "/dev/" .. tostring(dev_idx)
 end
 
-local function extract_hid_vid_pid(device_path)
+local function extract_device_vid(device_path)
     local path = tostring(device_path or ""):lower()
-    if not path:find("hid", 1, true) then
-        return nil, nil
-    end
-
-    local vid = path:match("vid_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
+    return path:match("vid_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
         or path:match("ven_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
-    local pid = path:match("pid_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
-        or path:match("dev_?([0-9a-f][0-9a-f][0-9a-f][0-9a-f])")
-
-    return vid, pid
 end
 
 local function conflict_rule_for_device_path(device_path)
-    local vid, pid = extract_hid_vid_pid(device_path)
-    if not vid or not pid then
+    local vid = extract_device_vid(device_path)
+    if not vid then
         return nil
     end
-    return conflict_rules[vid .. ":" .. pid]
+    return conflict_rules[vid]
 end
 
 local function register_device(dev_idx, info)
