@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "Passerelle OpenRGB",
-    "description": "Intègre les appareils OpenRGB dans Light via TCP."
+    "description": "Intègre les appareils OpenRGB dans Light via TCP. Projet non officiel ; sans affiliation ni approbation du projet OpenRGB."
   },
   "notifications": {
     "title": "OpenRGB",

@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "OpenRGB Köprüsü",
-    "description": "OpenRGB cihazlarını TCP üzerinden Light'a köprüler."
+    "description": "OpenRGB cihazlarını TCP üzerinden Light'a köprüler. Resmî olmayan bir projedir; OpenRGB projesiyle bağlantısı veya onayı yoktur."
   },
   "notifications": {
     "title": "OpenRGB",

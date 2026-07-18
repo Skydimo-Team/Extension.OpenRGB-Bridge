@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "OpenRGB-Brücke",
-    "description": "Bindet OpenRGB-Geräte über TCP in Light ein."
+    "description": "Bindet OpenRGB-Geräte über TCP in Light ein. Inoffizielles Projekt; nicht mit dem OpenRGB-Projekt verbunden oder von ihm unterstützt."
   },
   "notifications": {
     "title": "OpenRGB",

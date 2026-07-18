@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "OpenRGB Bridge",
-    "description": "Интегрирует устройства OpenRGB в Light через TCP."
+    "description": "Интегрирует устройства OpenRGB в Light через TCP. Неофициальный проект; не связан с проектом OpenRGB и не одобрен им."
   },
   "notifications": {
     "title": "OpenRGB",

@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "OpenRGB 桥接",
-    "description": "通过 TCP 将 OpenRGB 设备桥接到 Light。"
+    "description": "通过 TCP 将 OpenRGB 设备桥接到 Light。非官方项目，与 OpenRGB 项目无关联，亦未获其背书。"
   },
   "notifications": {
     "title": "OpenRGB",

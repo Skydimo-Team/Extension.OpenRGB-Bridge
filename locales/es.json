@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "Puente OpenRGB",
-    "description": "Integra dispositivos OpenRGB en Light mediante TCP."
+    "description": "Integra dispositivos OpenRGB en Light mediante TCP. Proyecto no oficial; sin afiliación ni respaldo del proyecto OpenRGB."
   },
   "notifications": {
     "title": "OpenRGB",
