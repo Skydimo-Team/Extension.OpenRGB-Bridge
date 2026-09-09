@@ -1,1 +1,3 @@
 disabled_devices.json
+OpenRGB/**
+!OpenRGB/README.md
