@@ -1,5 +1,6 @@
 import type { DevicesSnapshotPayload, OpenRGBDevice } from './types'
 import { setLocale } from './i18n'
+import { authenticateExtensionSocket } from './extensionPageSession.js'
 
 interface ExtPageEnv {
   extId: string
@@ -18,6 +19,7 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
 export type BridgeEvent =
   | { type: 'devices_snapshot'; data: DevicesSnapshotPayload }
   | { type: 'connection_status'; data: { connected: boolean } }
+  | { type: 'error'; data: { message: string } }
 
 type BridgeListener = (event: BridgeEvent) => void
 type StatusListener = (status: ConnectionStatus) => void
@@ -45,6 +47,7 @@ class ExtensionBridge {
   private statusListeners = new Set<StatusListener>()
   private rpcId = 1
   private status: ConnectionStatus = 'disconnected'
+  private shouldReconnect = false
 
   getStatus() {
     return this.status
@@ -62,19 +65,27 @@ class ExtensionBridge {
   }
 
   connect() {
+    this.shouldReconnect = true
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return
     }
 
     this.setStatus('connecting')
-    this.ws = new WebSocket(PAGE.wsUrl)
+    const socket = new WebSocket(PAGE.wsUrl)
+    this.ws = socket
 
     this.ws.onopen = () => {
+      if (this.ws !== socket) return
       this.setStatus('connected')
       this.send('bootstrap')
     }
 
     this.ws.onmessage = (event) => {
+      if (this.ws !== socket) return
       let payload: Record<string, unknown>
       try {
         payload = JSON.parse(event.data) as Record<string, unknown>
@@ -135,17 +146,33 @@ class ExtensionBridge {
     }
 
     this.ws.onclose = () => {
+      if (this.ws !== socket) return
       this.ws = null
       this.setStatus('disconnected')
-      this.reconnectTimer = setTimeout(() => this.connect(), 3000)
+      if (this.shouldReconnect && !this.reconnectTimer) {
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectTimer = null
+          this.connect()
+        }, 3000)
+      }
     }
 
     this.ws.onerror = () => {
       // onclose handles reconnection.
     }
+    authenticateExtensionSocket(socket, {
+      onError: (error) => {
+        if (this.ws !== socket) return
+        if (error.fatal) this.shouldReconnect = false
+        for (const listener of this.listeners) {
+          listener({ type: 'error', data: { message: error.message } })
+        }
+      },
+    })
   }
 
   disconnect() {
+    this.shouldReconnect = false
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
@@ -158,7 +185,7 @@ class ExtensionBridge {
   }
 
   send(type: string, payload: Record<string, unknown> = {}) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+    if (this.status !== 'connected' || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
       return
     }
 

@@ -51,16 +51,19 @@ function useBridge() {
   const [devices, setDevices] = useState<OpenRGBDevice[]>([])
   const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean }>({ connected: false })
   const [wsStatus, setWsStatus] = useState<ConnectionStatus>('disconnected')
+  const [bridgeError, setBridgeError] = useState<string | null>(null)
   const forceUpdate = useForceUpdate()
 
   useEffect(() => {
     const unsubEvent = bridge.subscribe((event: BridgeEvent) => {
       if (event.type === 'devices_snapshot') {
         setDevices(event.data.devices)
+        setBridgeError(null)
       }
       if (event.type === 'connection_status') {
         setConnectionStatus(event.data)
       }
+      if (event.type === 'error') setBridgeError(event.data.message)
     })
     const unsubStatus = bridge.subscribeStatus(setWsStatus)
     const unsubLocale = onLocaleChange(() => forceUpdate())
@@ -73,7 +76,7 @@ function useBridge() {
     }
   }, [forceUpdate])
 
-  return { devices, connectionStatus, wsStatus }
+  return { devices, connectionStatus, wsStatus, bridgeError }
 }
 
 const DEVICE_TYPE_ICONS: Record<DeviceType, React.ElementType> = {
@@ -307,7 +310,7 @@ function DeviceCard({ device, onToggle }: {
 /* -- App ---------------------------------------------------- */
 
 export default function App() {
-  const { devices, connectionStatus, wsStatus } = useBridge()
+  const { devices, connectionStatus, wsStatus, bridgeError } = useBridge()
   const [filter, setFilter] = useState<DeviceFilter>('all')
 
   const counts = useMemo(() => {
@@ -392,7 +395,7 @@ export default function App() {
                 {t('title')}
               </Text>
               <Text fontSize="12px" color="var(--text-muted)" truncate>
-                {summary}
+                {bridgeError ?? summary}
               </Text>
             </Box>
           </Flex>
