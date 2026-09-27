@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Badge,
   Box,
@@ -108,6 +108,10 @@ function getDeviceIcon(type: DeviceType): React.ElementType {
   return DEVICE_TYPE_ICONS[type] ?? Package
 }
 
+function DeviceTypeIcon({ type, size }: { type: DeviceType; size: number }) {
+  return createElement(getDeviceIcon(type), { size })
+}
+
 /* -- StatusBadge -------------------------------------------- */
 
 function StatusBadge({ connected }: { connected: boolean }) {
@@ -187,7 +191,6 @@ function DeviceCard({ device, onToggle }: {
   device: OpenRGBDevice
   onToggle: (controllerPort: string, disabled: boolean) => void
 }) {
-  const DevIcon = getDeviceIcon(device.device_type)
   const totalZoneLeds = device.zones.reduce((sum, z) => sum + z.leds_count, 0)
 
   return (
@@ -214,7 +217,7 @@ function DeviceCard({ device, onToggle }: {
               bg="var(--card-icon-bg)"
             >
               <Icon color="var(--accent-color)" boxSize="19px">
-                <DevIcon size={19} />
+                <DeviceTypeIcon type={device.device_type} size={19} />
               </Icon>
             </Flex>
 
