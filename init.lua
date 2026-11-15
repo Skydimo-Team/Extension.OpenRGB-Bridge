@@ -49,8 +49,14 @@ local disconnect                -- Forward declaration (used by connect_and_sync
 
 local disabled_devices = {}     -- set of device identity strings (vendor|name|serial)
 local conflict_rules = {}       -- "vid" -> { processes = { ... }, troubleshooting_url = string? }
+-- DESK-39: `io` is no longer available to extensions. Plugin-relative paths
+-- below go through the Host file API (`ext.read_file` / `ext.write_file`),
+-- which reads from the data directory first, then the plugin install
+-- directory (read-only), and writes only inside the data directory.
 local DISABLED_FILE = "disabled_devices.json"
-local CONFLICTING_EXE_FILE = "conflicting_exe.csv"
+local CONFLICTING_EXE_RESOURCE = "resources/conflicting_exe.csv"
+-- Absolute directory, still needed to locate the bundled OpenRGB executable
+-- for ext.spawn_process.
 local RESOURCE_DIR = ext.resource_dir or ext.data_dir
 
 local function trim(value)
@@ -58,11 +64,8 @@ local function trim(value)
 end
 
 local function load_disabled_devices()
-    local path = ext.data_dir .. "/" .. DISABLED_FILE
-    local f = io.open(path, "r")
-    if not f then return end
-    local raw = f:read("*a")
-    f:close()
+    local raw = ext.read_file(DISABLED_FILE)
+    if not raw then return end
     local ok, list = pcall(ext.json_decode, raw)
     if ok and type(list) == "table" then
         disabled_devices = {}
@@ -194,15 +197,14 @@ end
 local function load_conflict_rules()
     conflict_rules = {}
 
-    local path = RESOURCE_DIR .. "/" .. CONFLICTING_EXE_FILE
-    local f = io.open(path, "r")
-    if not f then
+    local raw = ext.read_file(CONFLICTING_EXE_RESOURCE)
+    if not raw then
         return
     end
 
     local header_map = nil
     local first_data_row = true
-    for line in f:lines() do
+    for line in raw:gmatch("[^\r\n]+") do
         if not line:match("^%s*$") and not line:match("^%s*#") then
             local fields = parse_csv_line(line)
             local skip_row = false
@@ -238,7 +240,6 @@ local function load_conflict_rules()
             end
         end
     end
-    f:close()
 
     local count = 0
     for _ in pairs(conflict_rules) do
@@ -255,11 +256,9 @@ local function save_disabled_devices()
         list[#list + 1] = port
     end
     table.sort(list)
-    local path = ext.data_dir .. "/" .. DISABLED_FILE
-    local f = io.open(path, "w")
-    if f then
-        f:write(ext.json_encode(list))
-        f:close()
+    local ok, err = ext.write_file(DISABLED_FILE, ext.json_encode(list))
+    if not ok then
+        ext.warn("Failed to save disabled devices: " .. tostring(err))
     end
 end
 
